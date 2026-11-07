@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI TradePilot</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1120;color:#fff;font-family:Arial,sans-serif;padding:18px}
+header{display:flex;justify-content:space-between;align-items:center}
+h2{color:#35d6a0}
+.card{background:#151f32;border:1px solid #27364d;border-radius:14px;padding:17px;margin:15px 0}
+.muted{color:#91a0b8;font-size:13px}
+.price{font-size:29px;font-weight:bold;margin:10px 0}
+.green{color:#35d6a0}.red{color:#ff647c}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{border:0;border-radius:9px;padding:14px;color:white;font-weight:bold;font-size:15px}
+.buy{background:#079b72}.sell{background:#d94b60}
+select{background:#243149;color:white;border:1px solid #44536a;padding:12px;border-radius:8px;width:100%}
+input{width:100%;padding:12px;background:#243149;color:white;border:1px solid #44536a;border-radius:8px}
+.full{width:100%;margin-top:12px;background:#2563eb}
+.signal{font-size:20px;font-weight:bold}
+table{width:100%;font-size:13px;text-align:left}
+td,th{padding:9px 3px;border-bottom:1px solid #344054}
+</style>
+</head>
+<body>
+<header>
+<div><h2>⚡ AI TradePilot</h2><div class="muted">Smart F&O Trading Assistant</div></div>
+<span class="green">● DEMO</span>
+</header>
+
+<div class="card">
+<div class="muted">PAPER TRADING BALANCE</div>
+<div class="price" id="balance">₹1,00,000</div>
+<div class="muted">Simulated capital · No real money</div>
+</div>
+
+<div class="grid">
+<div class="card">
+<div class="muted">NIFTY 50</div>
+<div class="price" id="nifty">24,850</div>
+<div class="green">+0.42% (SIMULATED)</div>
+</div>
+<div class="card">
+<div class="muted">BANK NIFTY</div>
+<div class="price" id="bank">56,200</div>
+<div class="green">+0.31% (SIMULATED)</div>
+</div>
+</div>
+
+<div class="card">
+<h3>🤖 AI Market Analysis</h3>
+<div class="signal green" id="signal">ANALYZING...</div>
+<p class="muted" id="reason">Demo strategy using simulated market data.</p>
+<button class="full" onclick="analyze()">RUN AI ANALYSIS</button>
+</div>
+
+<div class="card">
+<h3>📊 Paper Trading</h3>
+<label class="muted">Select instrument</label>
+<select id="instrument">
+<option>NIFTY</option>
+<option>BANKNIFTY</option>
+</select>
+<br><br>
+<label class="muted">Quantity (units)</label>
+<input id="qty" type="number" value="1" min="1">
+<div class="grid">
+<button class="buy" onclick="trade('BUY')">BUY</button>
+<button class="sell" onclick="trade('SELL')">SELL</button>
+</div>
+<p class="muted">Orders are simulated only. No broker connection.</p>
+</div>
+
+<div class="card">
+<h3>💼 Open Positions</h3>
+<table>
+<thead><tr><th>Instrument</th><th>Side</th><th>Qty</th><th>P&L</th></tr></thead>
+<tbody id="positions">
+<tr><td colspan="4">No open positions</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h3>⚙️ AI Permissions</h3>
+<p class="muted">Automatic real-money execution is disabled.</p>
+<p class="green">● Paper trading enabled</p>
+<p class="muted">Broker: Zerodha (not connected)</p>
+</div>
+
+<script>
+let balance=100000;
+let positions=[];
+let price=24850;
+
+function analyze(){
+ const signal=document.getElementById('signal');
+  const reason=document.getElementById('reason');
+   signal.textContent='WAIT – DEMO SIGNAL';
+    signal.className='signal';
+     reason.textContent='No live market feed connected. This is not a trading recommendation.';
+     }
+
+     function trade(side){
+      const qty=Number(document.getElementById('qty').value);
+       const instrument=document.getElementById('instrument').value;
+        if(!Number.isInteger(qty)||qty<1){alert('Enter a valid quantity');return;}
+         const p=instrument==='NIFTY'?price:56200;
+          const cost=p*qty;
+           if(side==='BUY'&&cost>balance){alert('Insufficient demo balance');return;}
+            if(side==='BUY')balance-=cost;
+             else balance+=cost;
+              positions.push({instrument,side,qty,p});
+               document.getElementById('balance').textContent='₹'+balance.toLocaleString('en-IN');
+                render();
+                }
+
+                function render(){
+                 document.getElementById('positions').innerHTML=positions.map(p=>
+                  `<tr><td>${p.instrument}</td><td>${p.side}</td><td>${p.qty}</td><td>₹0</td></tr>`
+                   ).join('');
+                   }
+                   analyze();
+                   </script>
+                   </body>
+                   </html>
+                   
