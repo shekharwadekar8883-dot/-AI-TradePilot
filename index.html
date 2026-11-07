@@ -96,13 +96,44 @@ let balance=100000;
 let positions=[];
 let price=24850;
 
-function analyze(){
- const signal=document.getElementById('signal');
-  const reason=document.getElementById('reason');
-   signal.textContent='WAIT – DEMO SIGNAL';
-    signal.className='signal';
-     reason.textContent='No live market feed connected. This is not a trading recommendation.';
-     }
+async function analyze(){
+  const signal = document.getElementById('signal');
+  const reason = document.getElementById('reason');
+  const instrument = document.getElementById('instrument').value;
+
+  signal.textContent = 'ANALYZING...';
+  reason.textContent = 'Fetching analysis from backend...';
+
+  try {
+    const response = await fetch(
+      'https://ai-tradepilot-backend.onrender.com/api/analyze?instrument='
+      + encodeURIComponent(instrument)
+    );
+
+    if (!response.ok) throw new Error('API request failed');
+
+    const data = await response.json();
+
+    signal.textContent = data.signal;
+    signal.className = 'signal ' +
+      (data.signal === 'BUY' ? 'green' :
+       data.signal === 'SELL' ? 'red' : '');
+
+    reason.textContent =
+      data.explanation +
+      ' | Entry: ' + data.entry +
+      ' | Stop Loss: ' + (data.stopLoss ?? 'N/A') +
+      ' | Target: ' + (data.target ?? 'N/A') +
+      ' | EMA 9: ' + data.indicators.ema9 +
+      ' | EMA 21: ' + data.indicators.ema21 +
+      ' | RSI: ' + data.indicators.rsi14 +
+      ' | ' + data.disclaimer;
+
+  } catch (error) {
+    signal.textContent = 'ERROR';
+    reason.textContent = 'Could not fetch analysis. Please try again.';
+  }
+}
 
      function trade(side){
       const qty=Number(document.getElementById('qty').value);
@@ -124,22 +155,7 @@ function analyze(){
                    ).join('');
                    }
                    analyze();
- fetch("https://ai-tradepilot-backend.onrender.com/")
-  .then(response => {
-    if (!response.ok) throw new Error("Backend error");
-    return response.json();
-  })
-  .then(data => {
-    const reason = document.getElementById("reason");
-    if (reason) {
-      reason.textContent =
-        "Backend connected! " + data.message +
-        " Live market data is not connected yet.";
-    }
-  })
-  .catch(error => {
-    console.error("Backend connection failed:", error);
-  });
+ 
                    </script>
                    </body>
                    </html>
