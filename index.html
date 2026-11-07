@@ -124,6 +124,22 @@ function analyze(){
                    ).join('');
                    }
                    analyze();
+ fetch("https://ai-tradepilot-backend.onrender.com/")
+  .then(response => {
+    if (!response.ok) throw new Error("Backend error");
+    return response.json();
+  })
+  .then(data => {
+    const reason = document.getElementById("reason");
+    if (reason) {
+      reason.textContent =
+        "Backend connected! " + data.message +
+        " Live market data is not connected yet.";
+    }
+  })
+  .catch(error => {
+    console.error("Backend connection failed:", error);
+  });
                    </script>
                    </body>
                    </html>
