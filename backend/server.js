@@ -122,7 +122,62 @@ app.get("/api/analyze", (req, res) => {
 
   res.json(analyze(instrument));
 });
+const crypto = require("crypto");
 
+let kiteAccessToken = null;
+
+app.get("/kite/callback", async (req, res) => {
+  const { request_token, status } = req.query;
+
+  if (status !== "success" || !request_token) {
+    return res.status(400).send("Kite login failed.");
+  }
+
+  const apiKey = process.env.KITE_API_KEY;
+  const apiSecret = process.env.KITE_API_SECRET;
+
+  if (!apiKey || !apiSecret) {
+    return res.status(503).send("Kite credentials are not configured.");
+  }
+
+  try {
+    const checksum = crypto.createHash("sha256")
+      .update(apiKey + request_token + apiSecret)
+      .digest("hex");
+
+    const response = await fetch(
+      "https://api.kite.trade/session/token",
+      {
+        method: "POST",
+        headers: {
+          "X-Kite-Version": "3",
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          api_key: apiKey,
+          request_token,
+          checksum
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || result.status !== "success") {
+      return res.status(502).send("Kite authentication failed.");
+    }
+
+    kiteAccessToken = result.data.access_token;
+
+    res.send("AI-TradePilot connected to Zerodha successfully.");
+  } catch (error) {
+    res.status(500).send("Authentication error.");
+  }
+});
+
+app.get("/api/kite/status", (req, res) => {
+  res.json({ connected: Boolean(kiteAccessToken) });
+});
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
