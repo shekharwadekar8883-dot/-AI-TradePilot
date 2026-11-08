@@ -125,7 +125,19 @@ app.get("/api/analyze", (req, res) => {
 const crypto = require("crypto");
 
 let kiteAccessToken = null;
+app.get("/kite/login", (req, res) => {
+  const apiKey = process.env.KITE_API_KEY;
 
+  if (!apiKey) {
+    return res.status(503).send("Kite API key is not configured.");
+  }
+
+  const loginUrl = new URL("https://kite.zerodha.com/connect/login");
+  loginUrl.searchParams.set("v", "3");
+  loginUrl.searchParams.set("api_key", apiKey);
+
+  res.redirect(loginUrl.toString());
+});
 app.get("/kite/callback", async (req, res) => {
   const { request_token, status } = req.query;
 
