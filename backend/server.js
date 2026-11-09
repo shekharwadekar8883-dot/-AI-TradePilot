@@ -258,6 +258,57 @@ app.get("/fyers/callback", async (req, res) => {
 
 app.get("/api/fyers/status", (req, res) => {
   res.json({ connected: Boolean(fyersAccessToken) });
+});
+app.get("/api/fyers/quote", async (req, res) => {
+  if (!fyersAccessToken) {
+    return res.status(401).json({ error: "Connect FYERS first" });
+  }
+
+  const instrument = String(req.query.instrument || "NIFTY").toUpperCase();
+
+  const symbols = {
+    NIFTY: "NSE:NIFTY50-INDEX",
+    BANKNIFTY: "NSE:NIFTYBANK-INDEX"
+  };
+
+  const symbol = symbols[instrument];
+
+  if (!symbol) {
+    return res.status(400).json({
+      error: "Choose NIFTY or BANKNIFTY"
+    });
+  }
+
+  try {
+    const response = await fetch(
+      `https://api-t1.fyers.in/data/quotes?symbols=${encodeURIComponent(symbol)}`,
+      {
+        headers: {
+          Authorization: `${process.env.FYERS_APP_ID}:${fyersAccessToken}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.s !== "ok" || !data.d?.[0]?.v) {
+      return res.status(502).json({
+        error: "FYERS quote request failed",
+        details: data
+      });
+    }
+
+    res.json({
+      instrument,
+      symbol,
+      ltp: data.d[0].v.lp,
+      quote: data.d[0].v,
+      mode: "LIVE"
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Unable to fetch FYERS quote" });
+  }
 });const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
