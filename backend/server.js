@@ -190,7 +190,75 @@ app.get("/kite/callback", async (req, res) => {
 app.get("/api/kite/status", (req, res) => {
   res.json({ connected: Boolean(kiteAccessToken) });
 });
-const PORT = process.env.PORT || 3000;
+let fyersAccessToken = null;
+let fyersLoginState = null;
+
+app.get("/fyers/login", (req, res) => {
+  const appId = process.env.FYERS_APP_ID;
+  const redirectUri = "https://ai-tradepilot-backend.onrender.com/fyers/callback";
+
+  if (!appId || !process.env.FYERS_SECRET_ID) {
+    return res.status(500).send("FYERS credentials are not configured.");
+  }
+
+  fyersLoginState = require("crypto").randomBytes(16).toString("hex");
+
+  const loginUrl = new URL("https://api-t1.fyers.in/api/v3/generate-authcode");
+  loginUrl.searchParams.set("client_id", appId);
+  loginUrl.searchParams.set("redirect_uri", redirectUri);
+  loginUrl.searchParams.set("response_type", "code");
+  loginUrl.searchParams.set("state", fyersLoginState);
+
+  res.redirect(loginUrl.toString());
+});
+
+app.get("/fyers/callback", async (req, res) => {
+  const { auth_code, state } = req.query;
+
+  if (!auth_code || state !== fyersLoginState) {
+    return res.status(400).send("FYERS login failed. Please try again.");
+  }
+
+  try {
+    const appId = process.env.FYERS_APP_ID;
+    const secret = process.env.FYERS_SECRET_ID;
+
+    const appIdHash = require("crypto")
+      .createHash("sha256")
+      .update(appId + ":" + secret)
+      .digest("hex");
+
+    const response = await fetch(
+      "https://api-t1.fyers.in/api/v3/validate-authcode",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          grant_type: "authorization_code",
+          appIdHash,
+          code: auth_code
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (result.s !== "ok" || !result.access_token) {
+      return res.status(401).send("FYERS authentication failed.");
+    }
+
+    fyersAccessToken = result.access_token;
+    fyersLoginState = null;
+
+    res.send("AI-TradePilot connected to FYERS successfully!");
+  } catch (error) {
+    res.status(500).send("FYERS connection error.");
+  }
+});
+
+app.get("/api/fyers/status", (req, res) => {
+  res.json({ connected: Boolean(fyersAccessToken) });
+});const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log("AI-TradePilot running on port " + PORT);
