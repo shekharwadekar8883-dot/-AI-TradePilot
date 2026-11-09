@@ -95,7 +95,33 @@ td,th{padding:9px 3px;border-bottom:1px solid #344054}
 let balance=100000;
 let positions=[];
 let price=24850;
+async function refreshLivePrices() {
+  try {
+    const [niftyRes, bankRes] = await Promise.all([
+      fetch('https://ai-tradepilot-backend.onrender.com/api/fyers/quote?instrument=NIFTY'),
+      fetch('https://ai-tradepilot-backend.onrender.com/api/fyers/quote?instrument=BANKNIFTY')
+    ]);
 
+    if (!niftyRes.ok || !bankRes.ok) {
+      throw new Error('Live price request failed');
+    }
+
+    const nifty = await niftyRes.json();
+    const bank = await bankRes.json();
+
+    document.getElementById('nifty').textContent =
+      Number(nifty.ltp).toLocaleString('en-IN');
+
+    document.getElementById('bank').textContent =
+      Number(bank.ltp).toLocaleString('en-IN');
+
+  } catch (error) {
+    console.log('Live prices unavailable:', error);
+  }
+}
+
+refreshLivePrices();
+setInterval(refreshLivePrices, 15000);
 async function analyze(){
   const signal = document.getElementById('signal');
   const reason = document.getElementById('reason');
