@@ -334,7 +334,7 @@ app.get("/api/fyers/quote", async (req, res) => {
       quote: data.d[0].v,
       mode: "LIVE"
     });
-  } catch (error) {
+  } catch (error) {console.error("FYERS QUOTE ERROR:", error);
     res.status(500).json({ error: "Unable to fetch FYERS quote" });
   }
 });const PORT = process.env.PORT || 3000;
