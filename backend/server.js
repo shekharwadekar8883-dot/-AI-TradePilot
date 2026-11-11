@@ -318,7 +318,9 @@ app.get("/api/fyers/quote", async (req, res) => {
       }
     );
 
-    const data = await response.json();
+    const raw = await response.text();
+console.log("FYERS RAW RESPONSE:", raw);
+const data = JSON.parse(raw);
 
     if (!response.ok || data.s !== "ok" || !data.d?.[0]?.v) {
       return res.status(502).json({
