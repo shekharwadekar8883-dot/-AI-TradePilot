@@ -160,8 +160,10 @@ target: signal === "HOLD" ? null :
   macdSignal: Number(macdSignal[last].toFixed(2)),
   atr: Number(atr.toFixed(2))
 },
-    disclaimer: "Based on FYERS historical 5-minute candles. Paper trading only; not a trading recommendation."
+        disclaimer: "Based on FYERS historical 5-minute candles. Paper trading only; not a trading recommendation."
   };
+}
+
 app.get("/", (req, res) => {
   res.json({
     message: "AI-TradePilot backend is running!",
