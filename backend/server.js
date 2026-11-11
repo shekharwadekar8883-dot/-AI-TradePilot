@@ -102,24 +102,42 @@ const atr = trueRanges.slice(-14).reduce((sum, value) => sum + value, 0) / 14;
 
   const last = prices.length - 1;
 
-  const bullishCross =
-    fast[last] > slow[last] &&
-    fast[last - 1] <= slow[last - 1];
+  const bullishTrend =
+  fast[last] > slow[last] &&
+  prices[last] > fast[last];
 
-  const bearishCross =
-    fast[last] < slow[last] &&
-    fast[last - 1] >= slow[last - 1];
+const bearishTrend =
+  fast[last] < slow[last] &&
+  prices[last] < fast[last];
 
-  let signal = "HOLD";
-  let explanation = "No clear trading setup. Waiting for confirmation.";
+const bullishMomentum =
+  macdLine[last] > macdSignal[last] &&
+  macdLine[last] > macdLine[last - 1];
 
-  if (bullishCross && rsi >= 45 && rsi <= 68) {
-    signal = "BUY";
-    explanation = "Bullish EMA crossover with RSI confirmation.";
-  } else if (bearishCross && rsi >= 32 && rsi <= 55) {
-    signal = "SELL";
-    explanation = "Bearish EMA crossover with RSI confirmation.";
-  }
+const bearishMomentum =
+  macdLine[last] < macdSignal[last] &&
+  macdLine[last] < macdLine[last - 1];
+
+let signal = "HOLD";
+let explanation = "No clear trading setup. Waiting for confirmation.";
+
+if (
+  bullishTrend &&
+  bullishMomentum &&
+  rsi >= 50 &&
+  rsi <= 68
+) {
+  signal = "BUY";
+  explanation = "Bullish EMA trend with MACD and RSI confirmation.";
+} else if (
+  bearishTrend &&
+  bearishMomentum &&
+  rsi >= 32 &&
+  rsi <= 50
+) {
+  signal = "SELL";
+  explanation = "Bearish EMA trend with MACD and RSI confirmation.";
+}
 
   const entry = Number(prices[last].toFixed(2));
 
@@ -130,18 +148,20 @@ const atr = trueRanges.slice(-14).reduce((sum, value) => sum + value, 0) / 14;
     explanation,
     entry,
     stopLoss: signal === "HOLD" ? null :
-      Number((entry * (signal === "BUY" ? 0.992 : 1.008)).toFixed(2)),
-    target: signal === "HOLD" ? null :
-      Number((entry * (signal === "BUY" ? 1.016 : 0.984)).toFixed(2)),
+  Number((entry + (signal === "BUY" ? -1.5 : 1.5) * atr).toFixed(2)),
+
+target: signal === "HOLD" ? null :
+  Number((entry + (signal === "BUY" ? 3 : -3) * atr).toFixed(2)),
     indicators: {
-      ema9: Number(fast[last].toFixed(2)),
-      ema21: Number(slow[last].toFixed(2)),
-      rsi14: Number(rsi.toFixed(2))
-    },
+  ema9: Number(fast[last].toFixed(2)),
+  ema21: Number(slow[last].toFixed(2)),
+  rsi14: Number(rsi.toFixed(2)),
+  macd: Number(macdLine[last].toFixed(2)),
+  macdSignal: Number(macdSignal[last].toFixed(2)),
+  atr: Number(atr.toFixed(2))
+},
     disclaimer: "Based on FYERS historical 5-minute candles. Paper trading only; not a trading recommendation."
   };
-}
-
 app.get("/", (req, res) => {
   res.json({
     message: "AI-TradePilot backend is running!",
