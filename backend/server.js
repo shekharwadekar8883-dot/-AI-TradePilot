@@ -75,7 +75,10 @@ async function analyze(instrument) {
     throw new Error("Insufficient FYERS historical candle data");
   }
 
-  const prices = data.candles.map(candle => Number(candle[4]));
+  const candles = data.candles;
+const prices = candles.map(candle => Number(candle[4]));
+const highs = candles.map(candle => Number(candle[2]));
+const lows = candles.map(candle => Number(candle[3]));
 
   const fast = ema(prices, 9);
   const slow = ema(prices, 21);
