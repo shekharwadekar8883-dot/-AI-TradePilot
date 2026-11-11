@@ -81,8 +81,24 @@ const highs = candles.map(candle => Number(candle[2]));
 const lows = candles.map(candle => Number(candle[3]));
 
   const fast = ema(prices, 9);
-  const slow = ema(prices, 21);
-  const rsi = calculateRSI(prices);
+const slow = ema(prices, 21);
+const rsi = calculateRSI(prices);
+
+const ema12 = ema(prices, 12);
+const ema26 = ema(prices, 26);
+const macdLine = prices.map((_, i) => ema12[i] - ema26[i]);
+const macdSignal = ema(macdLine, 9);
+
+const trueRanges = candles.map((candle, i) => {
+  if (i === 0) return highs[i] - lows[i];
+  return Math.max(
+    highs[i] - lows[i],
+    Math.abs(highs[i] - prices[i - 1]),
+    Math.abs(lows[i] - prices[i - 1])
+  );
+});
+
+const atr = trueRanges.slice(-14).reduce((sum, value) => sum + value, 0) / 14;
 
   const last = prices.length - 1;
 
